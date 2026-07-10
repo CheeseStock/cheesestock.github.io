@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>CheeseStock · 시세 랭킹 (WOFF)</title>
+<!--
+  WOFF 미니앱 (PoC #1 · F5-01) — cheesestock.github.io 동일 오리진 manifest 소비.
+  info-only · read-only. woff.getProfile/getAccessToken/sendMessage 미사용(OFF).
+  데이터: 시세/시총(DataGo 15094808 = 이용허락범위 제한없음) + 파생 닮은꼴 패턴.
+  ⚠️ 등록 후 아래 WOFF_ID 를 Developer Console 발급값으로 교체.
+-->
+<style>
+  :root {
+    --bg:#FBF8F3; --surface:#FFFFFF; --surface-2:#F5EFE5;
+    --ink:#241A12; --ink-2:#6D5E4F; --ink-3:#9A8974;
+    --line:#E9E1D4; --line-2:#DBCFBB;
+    --accent:#FFA602; --accent-ink:#8F5507; --accent-soft:#FDEFCE;
+    --mocha:#432C1C;
+    --up:#C0392B; --down:#1E67C6;   /* 한국 관행: 상승 적 / 하락 청 */
+    --grade3:#C9740A; --grade2:#B79256; --grade1:#A6A08F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#17100A; --surface:#221811; --surface-2:#2C2016;
+      --ink:#F3EADF; --ink-2:#B7A794; --ink-3:#87745F;
+      --line:#38291C; --line-2:#463423;
+      --accent:#FFB733; --accent-ink:#FFC961; --accent-soft:#33240F;
+      --mocha:#E7D3C0;
+      --up:#F0705C; --down:#5B9BF0;
+      --grade3:#FFC24D; --grade2:#D6B983; --grade1:#8E8574;
+    }
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,system-ui,sans-serif;
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap { max-width:640px; margin:0 auto; padding:16px 14px 40px; }
+
+  header .eyebrow { font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); }
+  header h1 { font-size:1.3rem; font-weight:800; margin:4px 0 8px; letter-spacing:-0.01em; }
+  header h1 .mark { color:var(--accent); }
+  .basline { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.8rem; color:var(--ink-2); }
+  .badge { display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:.72rem; padding:3px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-2); }
+  .badge.live::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--up); }
+  .badge.holiday { color:var(--ink-3); }
+
+  .disc { margin:12px 0 4px; font-size:.72rem; line-height:1.45; color:var(--ink-3); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:9px 11px; }
+  .disc b { color:var(--ink-2); font-weight:700; }
+
+  nav.tabs { display:flex; gap:6px; margin:16px 0 10px; }
+  nav.tabs button {
+    flex:1; font:inherit; font-weight:700; font-size:.9rem; padding:9px 0; cursor:pointer;
+    color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  nav.tabs button[aria-selected="true"] { color:var(--mocha); background:var(--accent-soft); border-color:var(--accent); }
+  nav.tabs button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  .list { display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .row { display:grid; grid-template-columns:26px 1fr auto auto; align-items:center; gap:10px; padding:11px 12px; background:var(--surface); }
+  .row .rk { font-size:.8rem; font-weight:700; color:var(--ink-3); text-align:center; }
+  .row .nm { min-width:0; }
+  .row .nm b { display:block; font-size:.92rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .nm span { font-size:.72rem; color:var(--ink-3); }
+  .row .cap { font-size:.74rem; color:var(--ink-2); text-align:right; white-space:nowrap; }
+  .row .px { text-align:right; white-space:nowrap; }
+  .row .px b { display:block; font-size:.9rem; font-weight:700; }
+  .row .px .dl { font-size:.74rem; font-weight:700; }
+  .up { color:var(--up); }
+  .down { color:var(--down); }
+  .flat { color:var(--ink-3); }
+
+  section.block { margin-top:22px; }
+  section.block h2 { font-size:1rem; font-weight:800; margin:0 0 4px; }
+  section.block .cap { font-size:.72rem; color:var(--ink-3); margin:0 0 12px; }
+  .grades { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .gcell { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 8px; text-align:center; }
+  .gcell .st { font-size:.9rem; font-weight:800; letter-spacing:1px; }
+  .gcell.g3 .st { color:var(--grade3); }
+  .gcell.g2 .st { color:var(--grade2); }
+  .gcell.g1 .st { color:var(--grade1); }
+  .gcell.g0 .st { color:var(--ink-3); }
+  .gcell .n { font-size:1.35rem; font-weight:800; margin-top:6px; }
+  .gcell .lb { font-size:.66rem; color:var(--ink-3); margin-top:2px; }
+
+  details.poc { margin-top:24px; border:1px dashed var(--line-2); border-radius:12px; background:var(--surface); overflow:hidden; }
+  details.poc summary { cursor:pointer; padding:12px 14px; font-weight:700; font-size:.85rem; color:var(--accent-ink); list-style:none; }
+  details.poc summary::-webkit-details-marker { display:none; }
+  details.poc summary::before { content:"▸ "; }
+  details.poc[open] summary::before { content:"▾ "; }
+  .kv { padding:4px 14px 14px; display:grid; grid-template-columns:auto 1fr; gap:5px 12px; font-size:.78rem; }
+  .kv dt { color:var(--ink-3); white-space:nowrap; }
+  .kv dd { margin:0; font-weight:600; font-family:ui-monospace,"SF Mono",monospace; word-break:break-all; }
+  .kv dd.ok { color:var(--up); }
+  .kv dd.no { color:var(--ink-3); }
+
+  footer { margin-top:26px; padding-top:16px; border-top:1px solid var(--line); font-size:.7rem; line-height:1.5; color:var(--ink-3); }
+  footer b { color:var(--ink-2); }
+
+  .state { padding:30px 14px; text-align:center; color:var(--ink-3); font-size:.85rem; }
+  .state.err { color:var(--up); }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">CheeseStock · WORKS 미니앱</div>
+    <h1><span class="mark">🧀</span> 오늘의 시세 랭킹</h1>
+    <div class="basline">
+      <span class="badge" id="tradeBadge">—</span>
+      <span id="basDt">기준일 —</span>
+    </div>
+  </header>
+
+  <p class="disc">
+    <b>정보 제공 목적</b> — 본 화면은 시세·통계 <b>사실만</b> 전달하며 투자 판단은 이용자 본인의 몫입니다.
+    투자 추천·매매신호·자동매매를 제공하지 않습니다. 시세 출처: 공공데이터포털(DataGo) · KRX.
+  </p>
+
+  <nav class="tabs" role="tablist" aria-label="시장 선택">
+    <button type="button" role="tab" id="tab-KOSPI" aria-selected="true" aria-controls="ranking" data-market="KOSPI">KOSPI</button>
+    <button type="button" role="tab" id="tab-KOSDAQ" aria-selected="false" aria-controls="ranking" data-market="KOSDAQ">KOSDAQ</button>
+  </nav>
+
+  <div class="list" id="ranking" role="tabpanel" aria-labelledby="tab-KOSPI">
+    <div class="state" id="rankState">시세 불러오는 중…</div>
+  </div>
+
+  <section class="block" id="patternBlock" hidden>
+    <h2>닮은꼴 — 자기 과거 유사도 분포</h2>
+    <p class="cap">각 종목의 현재 형태와 닮은 <b>자기 과거 구간</b>(self-historical) <span id="patCount"></span>의 통계적 유사도 등급입니다. 통계적 유사도일 뿐 투자 판단·추천·미래 예측이 아닙니다. (DTW · 200종목 × 15/30/60일)</p>
+    <div class="grades" id="grades"></div>
+  </section>
+
+  <details class="poc">
+    <summary>PoC 검증 패널 (WOFF 컨텍스트)</summary>
+    <dl class="kv" id="pocKv">
+      <dt>SDK 로드</dt><dd id="p-sdk" class="no">확인 중…</dd>
+      <dt>isInClient</dt><dd id="p-inclient" class="no">—</dd>
+      <dt>viewType</dt><dd id="p-view">—</dd>
+      <dt>clientType</dt><dd id="p-client">—</dd>
+      <dt>woffId</dt><dd id="p-woffid">—</dd>
+      <dt>init 결과</dt><dd id="p-init" class="no">—</dd>
+      <dt>manifest</dt><dd id="p-manifest" class="no">—</dd>
+      <dt>language</dt><dd id="p-lang">—</dd>
+    </dl>
+  </details>
+
+  <footer>
+    <b>CheeseStock</b> — 금융투자업자·금융상품판매업자·유사투자자문업자가 아닌 정보 제공 서비스입니다.
+    데이터 <b>CC BY 4.0</b>(DataGo 주식시세정보 15094808, 이용허락범위 제한없음) + 자체 파생 통계.
+    개인 무료 테넌트 실험 · read-only.
+  </footer>
+</div>
+
+<script src="https://static.worksmobile.net/static/wm/woff/edge/3.7.1/sdk.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ⚠️ Developer Console(API app > WOFF app > Register)에서 발급받은 값으로 교체.
+  var WOFF_ID = "REPLACE_WITH_WOFF_ID";
+
+  var MANIFEST = {
+    ranking: "/manifest/v1/market_ranking.json.gz",
+    pattern: "/manifest/v1/pattern_match.json.gz"
+  };
+  var TOP_N = 10;
+  var rankingData = null;
+
+  function $(id) { return document.getElementById(id); }
+  function setKv(id, txt, cls) { var el = $(id); if (!el) return; el.textContent = txt; if (cls) el.className = cls; }
+
+  // ---- gzip 해제 (GitHub Pages 는 .gz 를 Content-Encoding 없이 원본 바이트로 서빙) ----
+  async function fetchManifest(url) {
+    var res = await fetch(url, { cache: "no-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var buf = new Uint8Array(await res.arrayBuffer());
+    // gzip magic 0x1f 0x8b → 브라우저 미해제 시 직접 해제
+    if (buf.length > 1 && buf[0] === 0x1f && buf[1] === 0x8b) {
+      if (typeof DecompressionStream === "undefined") {
+        throw new Error("DecompressionStream 미지원 브라우저");
+      }
+      var ds = new DecompressionStream("gzip");
+      var stream = new Blob([buf]).stream().pipeThrough(ds);
+      var text = await new Response(stream).text();
+      return JSON.parse(text);
+    }
+    // 서버가 이미 해제(Content-Encoding: gzip)한 경우
+    return JSON.parse(new TextDecoder().decode(buf));
+  }
+
+  // ---- 포맷터 ----
+  function krwCap(v) {
+    if (v >= 1e12) return (v / 1e12).toFixed(1) + "조";
+    if (v >= 1e8) return Math.round(v / 1e8).toLocaleString("ko-KR") + "억";
+    return Math.round(v).toLocaleString("ko-KR");
+  }
+  function pct(rate) {
+    var p = (rate * 100);
+    var s = (rate > 0 ? "▲" : rate < 0 ? "▼" : "―") + " " + Math.abs(p).toFixed(2) + "%";
+    return s;
+  }
+  function deltaClass(rate) { return rate > 0 ? "up" : rate < 0 ? "down" : "flat"; }
+
+  // ---- 렌더: 랭킹 ----
+  function renderRanking(market) {
+    var host = $("ranking");
+    if (!rankingData || !rankingData.rankings || !rankingData.rankings[market]) {
+      host.innerHTML = '<div class="state err">해당 시장 데이터가 없습니다.</div>';
+      return;
+    }
+    var rows = rankingData.rankings[market].slice(0, TOP_N);
+    var html = "";
+    rows.forEach(function (r) {
+      var dc = deltaClass(r.change_rate);
+      var sign = r.change_amount > 0 ? "+" : "";
+      html += '<div class="row">'
+        + '<div class="rk">' + r.rank + '</div>'
+        + '<div class="nm"><b>' + esc(r.stock_name) + '</b><span>' + shortCode(r.isin) + '</span></div>'
+        + '<div class="cap">' + krwCap(r.market_cap) + '</div>'
+        + '<div class="px"><b>' + Math.round(r.close_price).toLocaleString("ko-KR") + '</b>'
+        + '<span class="dl ' + dc + '">' + pct(r.change_rate) + '</span></div>'
+        + '</div>';
+    });
+    host.innerHTML = html;
+    host.setAttribute("aria-labelledby", "tab-" + market);
+  }
+
+  function shortCode(isin) {
+    // KR7005930003 → 005930 (3~8 substring)
+    return (isin && isin.length >= 9) ? isin.substring(3, 9) : (isin || "");
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  // ---- 렌더: 닮은꼴 등급 분포 (aggregate, §101 최소화) ----
+  function renderPatterns(data) {
+    if (!data || !Array.isArray(data.patterns)) return;
+    // match_mode="self" → rank0 은 자기-최근접이라 항상 ★3(degenerate).
+    // 전체 matches(모든 rank)로 tally 해야 유의미·정직한 분포.
+    var tally = { 3: 0, 2: 0, 1: 0, 0: 0 };
+    var total = 0;
+    data.patterns.forEach(function (p) {
+      (p.matches || []).forEach(function (m) {
+        total++;
+        var g = m.star_rating;
+        if (tally[g] === undefined) tally[g] = 0;
+        tally[g]++;
+      });
+    });
+    var pc = $("patCount");
+    if (pc) pc.textContent = total.toLocaleString("ko-KR") + "건";
+    var defs = [
+      { g: 3, st: "★★★", lb: "상위 1% 유사" },
+      { g: 2, st: "★★", lb: "상위 5% 유사" },
+      { g: 1, st: "★", lb: "상위 15% 유사" },
+      { g: 0, st: "—", lb: "해당 없음" }
+    ];
+    var html = "";
+    defs.forEach(function (d) {
+      html += '<div class="gcell g' + d.g + '"><div class="st">' + d.st + '</div>'
+        + '<div class="n">' + (tally[d.g] || 0) + '</div><div class="lb">' + d.lb + '</div></div>';
+    });
+    $("grades").innerHTML = html;
+    $("patternBlock").hidden = false;
+  }
+
+  // ---- 기준일 배지 ----
+  function renderBasline(data) {
+    var trading = data.trading_day;
+    var badge = $("tradeBadge");
+    if (trading) { badge.className = "badge live"; badge.textContent = "거래일"; }
+    else { badge.className = "badge holiday"; badge.textContent = "휴장(직전 거래일)"; }
+    $("basDt").textContent = "기준일 " + fmtDate(data.basDt);
+  }
+  function fmtDate(d) {
+    return (d && d.length === 8) ? d.substring(0, 4) + "." + d.substring(4, 6) + "." + d.substring(6, 8) : (d || "—");
+  }
+
+  // ---- 탭 ----
+  function wireTabs() {
+    document.querySelectorAll('nav.tabs button').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll('nav.tabs button').forEach(function (b) { b.setAttribute("aria-selected", "false"); });
+        btn.setAttribute("aria-selected", "true");
+        renderRanking(btn.dataset.market);
+      });
+    });
+  }
+
+  // ---- WOFF 초기화 (가드 — 비-WORKS 환경도 graceful) ----
+  function initWoff() {
+    if (typeof woff === "undefined") {
+      setKv("p-sdk", "미로드 (일반 브라우저)", "no");
+      setKv("p-init", "skip (WOFF 밖)", "no");
+      return Promise.resolve();
+    }
+    setKv("p-sdk", "OK (3.7.1)", "ok");
+    return woff.init({ woffId: WOFF_ID })
+      .then(function () {
+        setKv("p-init", "성공", "ok");
+        try {
+          var ctx = woff.getContext ? woff.getContext() : {};
+          setKv("p-view", ctx.viewType || "—");
+          setKv("p-client", ctx.clientType || "—");
+          setKv("p-woffid", (ctx.clientId || WOFF_ID));
+        } catch (e) {}
+        try { setKv("p-inclient", String(woff.isInClient()), woff.isInClient() ? "ok" : "no"); } catch (e) {}
+        try { setKv("p-lang", woff.getLanguage ? woff.getLanguage() : "—"); } catch (e) {}
+        // 경계: getProfile / getAccessToken / sendMessage 는 호출하지 않음 (read-only)
+      })
+      .catch(function (err) {
+        setKv("p-init", "실패 " + (err && err.code ? err.code : "") + " " + (err && err.message ? err.message : ""), "no");
+        // init 실패해도 manifest 렌더는 계속 (데이터 표시는 WOFF 불요)
+      });
+  }
+
+  // ---- 부트스트랩 ----
+  async function boot() {
+    wireTabs();
+    // WOFF 와 manifest 는 독립 — 병렬
+    initWoff();
+    try {
+      rankingData = await fetchManifest(MANIFEST.ranking);
+      renderBasline(rankingData);
+      renderRanking("KOSPI");
+      setKv("p-manifest", "OK basDt " + rankingData.basDt, "ok");
+    } catch (e) {
+      $("ranking").innerHTML = '<div class="state err">시세를 불러오지 못했습니다: ' + esc(e.message) + '</div>';
+      setKv("p-manifest", "실패 " + e.message, "no");
+    }
+    try {
+      var pat = await fetchManifest(MANIFEST.pattern);
+      renderPatterns(pat);
+    } catch (e) { /* 패턴은 부가 — 실패 무시 */ }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

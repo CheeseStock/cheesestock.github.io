@@ -142,13 +142,14 @@
   <details class="poc">
     <summary>PoC 검증 패널 (WOFF 컨텍스트)</summary>
     <dl class="kv" id="pocKv">
+      <dt>실행 위치</dt><dd id="p-loc" class="no">—</dd>
       <dt>SDK 로드</dt><dd id="p-sdk" class="no">확인 중…</dd>
+      <dt>init 결과</dt><dd id="p-init" class="no">—</dd>
+      <dt>manifest</dt><dd id="p-manifest" class="no">—</dd>
       <dt>isInClient</dt><dd id="p-inclient" class="no">—</dd>
       <dt>viewType</dt><dd id="p-view">—</dd>
       <dt>clientType</dt><dd id="p-client">—</dd>
-      <dt>woffId</dt><dd id="p-woffid">—</dd>
-      <dt>init 결과</dt><dd id="p-init" class="no">—</dd>
-      <dt>manifest</dt><dd id="p-manifest" class="no">—</dd>
+      <dt>clientId</dt><dd id="p-woffid">—</dd>
       <dt>language</dt><dd id="p-lang">—</dd>
     </dl>
   </details>
@@ -310,9 +311,13 @@
           var ctx = woff.getContext ? woff.getContext() : {};
           setKv("p-view", ctx.viewType || "—");
           setKv("p-client", ctx.clientType || "—");
-          setKv("p-woffid", (ctx.clientId || WOFF_ID));
+          setKv("p-woffid", (ctx.clientId || "—"));
         } catch (e) {}
-        try { setKv("p-inclient", String(woff.isInClient()), woff.isInClient() ? "ok" : "no"); } catch (e) {}
+        try {
+          var inC = woff.isInClient();
+          setKv("p-inclient", String(inC), inC ? "ok" : "no");
+          setKv("p-loc", inC ? "톡룸 임베드 ✅ (in-client)" : "외부 브라우저 — 휴대폰 WORKS 앱에서 열면 톡룸 임베드", inC ? "ok" : "no");
+        } catch (e) {}
         try { setKv("p-lang", woff.getLanguage ? woff.getLanguage() : "—"); } catch (e) {}
         // 경계: getProfile / getAccessToken / sendMessage 는 호출하지 않음 (read-only)
       })

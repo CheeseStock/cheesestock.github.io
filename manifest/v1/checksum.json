@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "generated_at": "2026-11-01T23:35:15.877505+09:00",
+  "generated_at": "2026-11-03T02:54:41.850754+09:00",
   "files": {
-    "market_ranking.json.gz": "sha256:514f048876dae1d2c0b2b0f68bf249697b3e6938a965c088a357e3e318c8ebb4",
-    "pattern_match.json.gz": "sha256:cf25fbce021ab5bfc3fb603dc5c47d742d67d72ac58639bb4fc269aae7221f92"
+    "market_ranking.json.gz": "sha256:5b828851c8009b7afa46b4788377cdd50abd1c75dcf9f5e52b343e29cbd2cbce",
+    "pattern_match.json.gz": "sha256:5d48cca804ef1aa20d43594c8fb4a338f2cdbe20f88f5c05a8eb7e8f718e97eb"
   }
 }
